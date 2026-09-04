@@ -1,4 +1,4 @@
-import { verifyPassword, createSessionCookie, checkRateLimit, recordFailedLogin, clearFailedLogin } from '../_lib/auth.js';
+import { verifyPassword, createSessionCookie, createPending2FACookie, checkRateLimit, recordFailedLogin, clearFailedLogin } from '../_lib/auth.js';
 import { json } from '../_lib/http.js';
 
 async function verifyTurnstileToken(secret, token, ip) {
@@ -43,6 +43,15 @@ export async function onRequestPost(context) {
   }
 
   await clearFailedLogin(env, ip);
+
+  // With ADMIN_TOTP_SECRET configured, a correct password isn't enough
+  // by itself — hand back a short-lived pending cookie and make the
+  // browser complete /admin/api/verify-2fa before it gets a real session.
+  if (env.ADMIN_TOTP_SECRET) {
+    const pendingCookie = await createPending2FACookie(env);
+    return json({ success: true, twoFactorRequired: true }, 200, { 'Set-Cookie': pendingCookie });
+  }
+
   const cookie = await createSessionCookie(env);
-  return json({ success: true }, 200, { 'Set-Cookie': cookie });
+  return json({ success: true, twoFactorRequired: false }, 200, { 'Set-Cookie': cookie });
 }

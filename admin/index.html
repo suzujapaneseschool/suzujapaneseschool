@@ -72,6 +72,27 @@ textarea{resize:vertical;min-height:70px;}
 .feedback.err{color:var(--danger);}
 .feedback.ok{color:var(--herb);}
 
+/* ---------- 2FA ---------- */
+.otp-row{display:flex;gap:8px;justify-content:center;margin-bottom:4px;}
+.otp-box{
+  width:44px;height:54px;text-align:center;padding:0;font-size:1.5rem;font-weight:700;
+  font-family:'Zen Kaku Gothic New',sans-serif;
+}
+.login-links{display:flex;justify-content:space-between;margin-top:16px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:.78rem;}
+.login-link{color:var(--ink-2);text-decoration:none;cursor:pointer;}
+.login-link:hover{color:var(--mango-deep);text-decoration:underline;}
+
+/* ---------- Recovery codes modal ---------- */
+.recovery-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0;}
+.recovery-code{
+  font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;letter-spacing:1px;text-align:center;
+  background:var(--cream);border:1.5px solid var(--gold-soft);border-radius:8px;padding:10px 6px;font-size:.92rem;
+}
+.security-status{display:flex;align-items:center;gap:10px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:.85rem;margin-bottom:18px;}
+.security-status .dot{width:9px;height:9px;border-radius:50%;flex:none;}
+.security-status .dot.on{background:var(--herb);}
+.security-status .dot.off{background:var(--danger);}
+
 /* ---------- DASHBOARD SHELL ---------- */
 #dashboard{max-width:1240px;margin:0 auto;padding:26px 24px 60px;}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap;}
@@ -232,17 +253,45 @@ tbody tr:hover{background:rgba(245,184,0,.06);}
 <div id="loginScreen" class="hidden">
   <div class="login-card">
     <div class="login-stamp">鈴</div>
-    <h1 class="login-title">Admin Login<span class="jp">管理者ログイン</span></h1>
-    <p class="login-sub">SUZU SENSEI — CONTROL PANEL</p>
-    <form id="loginForm" autocomplete="off">
-      <div class="field">
-        <label for="loginPassword">パスワード / Password</label>
-        <input type="password" id="loginPassword" name="password" placeholder="パスワードを入力してください" required autocomplete="current-password">
-      </div>
-      <div class="cf-turnstile" id="login-turnstile"></div>
-      <button type="submit" class="btn btn-fill" id="loginSubmit">Sign In</button>
-      <p class="feedback" id="loginFeedback"></p>
-    </form>
+
+    <div id="loginStepPassword">
+      <h1 class="login-title">Admin Login<span class="jp">管理者ログイン</span></h1>
+      <p class="login-sub">SUZU SENSEI — CONTROL PANEL</p>
+      <form id="loginForm" autocomplete="off">
+        <div class="field">
+          <label for="loginPassword">パスワード / Password</label>
+          <input type="password" id="loginPassword" name="password" placeholder="パスワードを入力してください" required autocomplete="current-password">
+        </div>
+        <div class="cf-turnstile" id="login-turnstile"></div>
+        <button type="submit" class="btn btn-fill" id="loginSubmit">Sign In</button>
+        <p class="feedback" id="loginFeedback"></p>
+      </form>
+    </div>
+
+    <div id="loginStep2FA" class="hidden">
+      <h1 class="login-title">Verification<span class="jp">二段階認証</span></h1>
+      <p class="login-sub" id="twoFactorSub">認証アプリの6桁コードを入力してください<br>Enter the 6-digit code from your authenticator app</p>
+      <form id="twoFactorForm" autocomplete="off">
+        <div class="otp-row" id="otpRow">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" data-idx="0" aria-label="Digit 1">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" data-idx="1" aria-label="Digit 2">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" data-idx="2" aria-label="Digit 3">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" data-idx="3" aria-label="Digit 4">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" data-idx="4" aria-label="Digit 5">
+          <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" class="otp-box" data-idx="5" aria-label="Digit 6">
+        </div>
+        <div class="field hidden" id="recoveryField">
+          <label for="recoveryCode">Recovery Code</label>
+          <input type="text" id="recoveryCode" placeholder="XXXXX-XXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        </div>
+        <button type="submit" class="btn btn-fill" id="twoFactorSubmit">Verify</button>
+        <p class="feedback" id="twoFactorFeedback"></p>
+        <div class="login-links">
+          <a href="#" id="toggleRecoveryMode" class="login-link">Use a recovery code instead</a>
+          <a href="#" id="backToPassword" class="login-link">← Back</a>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -256,7 +305,10 @@ tbody tr:hover{background:rgba(245,184,0,.06);}
         <div class="brand-kicker">管理者パネル · Admin Panel</div>
       </div>
     </div>
-    <button class="btn btn-ghost" id="logoutBtn">Log Out</button>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" id="securityBtn">🔐 Security</button>
+      <button class="btn btn-ghost" id="logoutBtn">Log Out</button>
+    </div>
   </div>
 
   <div class="stats" id="statsRow"></div>
@@ -495,6 +547,7 @@ function showLogin(){
   document.getElementById('loadingScreen').classList.add('hidden');
   document.getElementById('dashboard').classList.add('hidden');
   document.getElementById('loginScreen').classList.remove('hidden');
+  showPasswordStep();
   renderLoginTurnstile();
 }
 function showDashboard(){
@@ -545,7 +598,11 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
       return;
     }
     document.getElementById('loginPassword').value = '';
-    showDashboard();
+    if (data.twoFactorRequired) {
+      showTwoFactorStep();
+    } else {
+      showDashboard();
+    }
   } catch (e) {
     fb.className = 'feedback err';
     fb.textContent = 'Network error — please try again.';
@@ -554,11 +611,191 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   }
 });
 
+/* ---------- 2FA step ---------- */
+const otpBoxes = Array.from(document.querySelectorAll('.otp-box'));
+let usingRecoveryCode = false;
+
+function showPasswordStep(){
+  document.getElementById('loginStep2FA').classList.add('hidden');
+  document.getElementById('loginStepPassword').classList.remove('hidden');
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginFeedback').className = 'feedback';
+  document.getElementById('loginFeedback').textContent = '';
+}
+function showTwoFactorStep(){
+  document.getElementById('loginStepPassword').classList.add('hidden');
+  document.getElementById('loginStep2FA').classList.remove('hidden');
+  usingRecoveryCode = false;
+  document.getElementById('otpRow').classList.remove('hidden');
+  document.getElementById('recoveryField').classList.add('hidden');
+  document.getElementById('toggleRecoveryMode').textContent = 'Use a recovery code instead';
+  otpBoxes.forEach(b => b.value = '');
+  document.getElementById('recoveryCode').value = '';
+  document.getElementById('twoFactorFeedback').className = 'feedback';
+  document.getElementById('twoFactorFeedback').textContent = '';
+  otpBoxes[0].focus();
+}
+
+// Auto-advance to the next box on input, back up on Backspace from an
+// empty box, and auto-submit once all six digits are in — the standard
+// OTP-entry UX (banking apps, GitHub's 2FA prompt, etc.).
+otpBoxes.forEach((box, i) => {
+  box.addEventListener('input', () => {
+    box.value = box.value.replace(/\D/g, '').slice(0, 1);
+    if (box.value && i < otpBoxes.length - 1) otpBoxes[i + 1].focus();
+    if (otpBoxes.every(b => b.value)) document.getElementById('twoFactorForm').requestSubmit();
+  });
+  box.addEventListener('keydown', (e) => {
+    if (e.key === 'Backspace' && !box.value && i > 0) otpBoxes[i - 1].focus();
+  });
+  box.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6).split('');
+    digits.forEach((d, idx) => { if (otpBoxes[idx]) otpBoxes[idx].value = d; });
+    const next = otpBoxes[Math.min(digits.length, otpBoxes.length - 1)];
+    next.focus();
+    if (otpBoxes.every(b => b.value)) document.getElementById('twoFactorForm').requestSubmit();
+  });
+});
+
+document.getElementById('toggleRecoveryMode').addEventListener('click', (e) => {
+  e.preventDefault();
+  usingRecoveryCode = !usingRecoveryCode;
+  document.getElementById('otpRow').classList.toggle('hidden', usingRecoveryCode);
+  document.getElementById('recoveryField').classList.toggle('hidden', !usingRecoveryCode);
+  document.getElementById('toggleRecoveryMode').textContent = usingRecoveryCode
+    ? 'Use authenticator app instead' : 'Use a recovery code instead';
+  document.getElementById('twoFactorFeedback').className = 'feedback';
+  document.getElementById('twoFactorFeedback').textContent = '';
+  if (usingRecoveryCode) document.getElementById('recoveryCode').focus();
+  else otpBoxes[0].focus();
+});
+
+document.getElementById('backToPassword').addEventListener('click', (e) => {
+  e.preventDefault();
+  showPasswordStep();
+  if (window.turnstile && loginTurnstileId !== null) turnstile.reset(loginTurnstileId);
+});
+
+document.getElementById('twoFactorForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const code = usingRecoveryCode
+    ? document.getElementById('recoveryCode').value.trim()
+    : otpBoxes.map(b => b.value).join('');
+  const fb = document.getElementById('twoFactorFeedback');
+  const btn = document.getElementById('twoFactorSubmit');
+
+  if (!code || (!usingRecoveryCode && code.length < 6)) return;
+
+  fb.className = 'feedback'; fb.textContent = '';
+  btn.disabled = true; btn.textContent = 'Verifying…';
+
+  try {
+    const res = await fetch('/admin/api/verify-2fa', {
+      method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ code })
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success){
+      const messages = {
+        'invalid-code': usingRecoveryCode ? 'Invalid or already-used recovery code.' : 'Incorrect code — please try again.',
+        'too-many-attempts': 'Too many failed attempts. Try again in 15 minutes.',
+        'session-expired': 'This verification step timed out — please sign in again.'
+      };
+      fb.className = 'feedback err';
+      fb.textContent = messages[data.error] || 'Verification failed. Please try again.';
+      if (data.error === 'session-expired') { setTimeout(showPasswordStep, 1500); }
+      else { otpBoxes.forEach(b => b.value = ''); otpBoxes[0].focus(); }
+      return;
+    }
+    showDashboard();
+  } catch (e) {
+    fb.className = 'feedback err';
+    fb.textContent = 'Network error — please try again.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Verify';
+  }
+});
+
 document.getElementById('logoutBtn').addEventListener('click', async () => {
   try { await fetch('/admin/api/logout', { method:'POST', credentials:'same-origin' }); } catch(e){}
   loginTurnstileId = null;
   showLogin();
 });
+
+/* ============================================================
+   SECURITY MODAL — 2FA recovery-code management. The authenticator
+   secret itself lives only in the ADMIN_TOTP_SECRET env var (there's no
+   API to read or change it from here — see the setup notes), but the
+   one-time recovery codes are KV-backed and safe to regenerate anytime.
+   ============================================================ */
+document.getElementById('securityBtn').addEventListener('click', openSecurityModal);
+
+async function openSecurityModal(){
+  const modalHtml = `
+    <div class="modal-overlay" id="securityModalOverlay">
+      <div class="modal" style="max-width:480px;">
+        <h3>Security <span class="jp">セキュリティ</span></h3>
+        <p class="modal-sub">Two-factor authentication &amp; recovery codes.</p>
+        <div id="securityModalBody"><p class="cell-muted kaku">Loading…</p></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="closeSecurityModalBtn" style="flex:1;">Close</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  document.getElementById('closeSecurityModalBtn').addEventListener('click', () => document.getElementById('securityModalOverlay').remove());
+  document.getElementById('securityModalOverlay').addEventListener('click', (e) => { if (e.target.id === 'securityModalOverlay') e.currentTarget.remove(); });
+
+  await loadSecurityStatus();
+}
+
+async function loadSecurityStatus(){
+  const body = document.getElementById('securityModalBody');
+  if (!body) return;
+  try {
+    const data = await api('/admin/api/2fa/recovery-codes');
+    if (!data.twoFactorEnabled) {
+      body.innerHTML = `
+        <div class="security-status"><span class="dot off"></span>Two-factor authentication is <b>not enabled</b> on this account.</div>
+        <p class="cell-muted kaku">Ask whoever manages the Cloudflare Pages project to set <code>ADMIN_TOTP_SECRET</code> to turn it on.</p>`;
+      return;
+    }
+    body.innerHTML = `
+      <div class="security-status"><span class="dot on"></span>Two-factor authentication is <b>enabled</b>.</div>
+      <p class="cell-muted kaku" style="margin-bottom:16px;">${data.remaining} unused recovery code${data.remaining === 1 ? '' : 's'} remaining. Each code works once, for when you don't have your authenticator app.</p>
+      <button type="button" class="btn btn-outline" id="regenCodesBtn" style="width:100%;">↻ Generate new recovery codes</button>
+      <p class="cell-muted kaku" style="margin-top:10px;font-size:.76rem;">Generating new codes immediately invalidates all existing ones.</p>`;
+    document.getElementById('regenCodesBtn').addEventListener('click', regenerateCodes);
+  } catch (e) {
+    body.innerHTML = '<p class="feedback err">Couldn\'t load security status.</p>';
+  }
+}
+
+async function regenerateCodes(){
+  const body = document.getElementById('securityModalBody');
+  if (!confirm('This invalidates all existing recovery codes. Continue?')) return;
+  try {
+    const data = await api('/admin/api/2fa/recovery-codes', { method: 'POST' });
+    const codesHtml = data.codes.map(c => `<div class="recovery-code">${esc(c)}</div>`).join('');
+    body.innerHTML = `
+      <div class="security-status"><span class="dot on"></span>New recovery codes generated.</div>
+      <p class="cell-muted kaku">Save these somewhere safe now — <b>they're shown only this once</b>. Each works one time.</p>
+      <div class="recovery-grid">${codesHtml}</div>
+      <button type="button" class="btn btn-outline" id="copyCodesBtn" style="width:100%;">⧉ Copy all codes</button>`;
+    document.getElementById('copyCodesBtn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(data.codes.join('\n'));
+        toast('Recovery codes copied.', 'ok');
+      } catch (e) {
+        toast('Could not copy — please save them manually.', 'err');
+      }
+    });
+    toast('New recovery codes generated.', 'ok');
+  } catch (err) {
+    body.innerHTML = `<p class="feedback err">Failed to generate codes: ${esc(err.message)}</p>`;
+  }
+}
 
 /* ============================================================
    STATS
