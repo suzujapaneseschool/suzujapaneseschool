@@ -1,5 +1,5 @@
 import { PLANS } from './stripe.js';
-import { escapeHtml, emailShell, detailRow, detailCard, ctaButton, paragraph, heading } from './email-template.js';
+import { escapeHtml, emailShell, detailRow, detailCard, paragraph, heading } from './email-template.js';
 
 async function sendResendEmail(env, { to, replyTo, subject, html }) {
   try {
@@ -24,14 +24,18 @@ async function sendResendEmail(env, { to, replyTo, subject, html }) {
 }
 
 /**
- * Sends the "payment received" pair of emails (teacher + customer) for a
- * given Stripe payment — but only once. Both the customer's return trip
+ * Sends exactly one "payment received" email (to the teacher, with the
+ * customer's info + their optional message) for a given Stripe payment —
+ * but only once. Both the customer's return trip
  * (stripe-session-status.js) and the async webhook (stripe-webhook.js)
  * call this for the same payment; whichever runs first claims the dedupe
  * key in KV and sends, the other sees the key already set and silently
- * skips.
+ * skips. Deliberately doesn't also email the customer a receipt — that
+ * needs a verified custom domain in Resend to even deliver (see
+ * functions/send-message.js), and doubles the Resend usage for no benefit
+ * on the free plan.
  */
-export async function notifyPaymentOnce(env, { captureId, orderID, planKey, amount, payerEmail, payerName }) {
+export async function notifyPaymentOnce(env, { captureId, orderID, planKey, amount, payerEmail, payerName, message }) {
   if (!captureId) return; // nothing to dedupe against — skip rather than risk a duplicate
 
   if (env.PAYMENTS_KV) {
@@ -72,13 +76,14 @@ export async function notifyPaymentOnce(env, { captureId, orderID, planKey, amou
     } catch (e) {}
   }
 
-  // 1) Notify the teacher — works today via the Resend sandbox sender,
-  //    since it's delivered to RESEND_TO_EMAIL (the account owner).
+  // Notify the teacher — works today via the Resend sandbox sender,
+  // since it's delivered to RESEND_TO_EMAIL (the account owner).
   if (env.RESEND_API_KEY && env.RESEND_TO_EMAIL) {
     const teacherRows = detailRow('Plan', escapeHtml(planLabel))
       + detailRow('Amount', displayAmount ? `¥${escapeHtml(String(displayAmount))}` : '')
       + detailRow('Payer', payerName ? escapeHtml(payerName) : '')
       + detailRow('Email', payerEmail ? escapeHtml(payerEmail) : '')
+      + detailRow('Message', message ? escapeHtml(message).replace(/\n/g, '<br>') : '')
       + detailRow('Stripe Session', orderID ? escapeHtml(orderID) : '')
       + detailRow('Payment Intent', escapeHtml(captureId));
 
@@ -96,32 +101,6 @@ export async function notifyPaymentOnce(env, { captureId, orderID, planKey, amou
       replyTo: payerEmail || undefined,
       subject: `Payment received — ${planLabel}`,
       html: teacherHtml
-    });
-  }
-
-  // 2) Confirm with the customer — needs a verified custom domain in
-  //    Resend to actually deliver (see functions/send-message.js for
-  //    why). Safe to leave on: it silently no-ops until then.
-  if (env.RESEND_API_KEY && payerEmail) {
-    const customerRows = detailRow('Plan', escapeHtml(planLabel))
-      + detailRow('Amount', displayAmount ? `¥${escapeHtml(String(displayAmount))}` : '')
-      + detailRow('Order ID', orderID ? escapeHtml(orderID) : '');
-
-    const customerHtml = emailShell({
-      title: 'Payment confirmed',
-      kicker: 'Payment Confirmed',
-      bodyHtml: heading(`Thank you${payerName ? ', ' + escapeHtml(payerName) : ''}! 🎉`)
-        + paragraph('Your payment went through and your spot is reserved. Here\'s a quick receipt for your records:')
-        + detailCard(customerRows)
-        + paragraph('I\'ll personally email you shortly to schedule your lessons over Zoom, at whatever pace works for you.')
-        + ctaButton('https://suzujapaneseschool.pages.dev/#contact', 'Visit the website')
-    });
-
-    await sendResendEmail(env, {
-      to: payerEmail,
-      replyTo: env.RESEND_TO_EMAIL,
-      subject: 'Your Suzu Sensei payment is confirmed',
-      html: customerHtml
     });
   }
 }

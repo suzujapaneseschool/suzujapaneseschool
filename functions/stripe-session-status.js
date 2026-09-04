@@ -30,7 +30,8 @@ export async function onRequestGet(context) {
         planKey: meta.plan,
         amount: session.amount_total,
         payerEmail: details.email || meta.email,
-        payerName: details.name || meta.name
+        payerName: details.name || meta.name,
+        message: meta.msg
       });
     }
 

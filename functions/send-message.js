@@ -23,7 +23,7 @@ export async function onRequestPost(context) {
     });
   }
 
-  const { name, email, level, goal, message, turnstileToken } = body;
+  const { name, email, level, goal, message, turnstileToken, notify } = body;
 
   if (!name || !email || !turnstileToken) {
     return new Response(JSON.stringify({ success: false, error: 'missing-fields' }), {
@@ -60,6 +60,18 @@ export async function onRequestPost(context) {
          VALUES (?, ?, ?, ?, ?, ?)`
       ).bind(name, email, level || '', goal || '', message || '', isPlanInquiry ? 1 : 0).run();
     } catch (e) {}
+  }
+
+  // notify: false lets a caller record the lead (contacts row above)
+  // without sending an email — used for the pricing-modal's pre-payment
+  // capture, since a single email already goes out once payment actually
+  // completes (see functions/_lib/notify-payment.js), and we don't want
+  // to burn the Resend quota on two emails for one purchase.
+  if (notify === false) {
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   const kicker = isPlanInquiry ? 'Plan Interest' : 'New Message';

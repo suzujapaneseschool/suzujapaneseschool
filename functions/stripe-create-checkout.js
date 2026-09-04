@@ -19,12 +19,15 @@ export async function onRequestPost(context) {
 
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   const email = typeof body.email === 'string' ? body.email.trim() : '';
+  // Stripe metadata values cap out at 500 chars — trimmed with margin.
+  const msg = typeof body.msg === 'string' ? body.msg.trim().slice(0, 450) : '';
   const origin = new URL(request.url).origin;
 
-  // metadata carries the plan key (+ contact info) through to the
-  // checkout.session.completed webhook AND to /stripe-session-status, so
-  // both can identify the purchase without trusting anything from the
-  // browser at capture time — the price always comes from PLANS above.
+  // metadata carries the plan key (+ contact info + optional message)
+  // through to the checkout.session.completed webhook AND to
+  // /stripe-session-status, so both can send the single post-payment
+  // notification email without trusting anything from the browser at
+  // capture time — the price always comes from PLANS above.
   const params = {
     mode: 'payment',
     success_url: `${origin}/?plan_session={CHECKOUT_SESSION_ID}#pricing`,
@@ -37,7 +40,7 @@ export async function onRequestPost(context) {
         product_data: { name: plan.name }
       }
     }],
-    metadata: { plan: body.plan, name, email }
+    metadata: { plan: body.plan, name, email, msg }
   };
   if (email) params.customer_email = email;
 
