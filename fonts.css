@@ -1,0 +1,17 @@
+/* Self-hosted, subsetted to exactly the characters used on this page
+   (Latin + the ~136 Japanese characters actually on the page). Replaces
+   the Google Fonts CDN — eliminates a cross-origin round trip and cuts
+   total font weight from ~847KB to ~457KB. */
+@font-face{font-family:'Fraunces';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/fraunces-400.woff2') format('woff2');}
+@font-face{font-family:'Fraunces';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/fraunces-500.woff2') format('woff2');}
+@font-face{font-family:'Fraunces';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/fraunces-600.woff2') format('woff2');}
+@font-face{font-family:'Fraunces';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/fraunces-700.woff2') format('woff2');}
+@font-face{font-family:'Fraunces';font-style:normal;font-weight:900;font-display:swap;src:url('/fonts/fraunces-900.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/shippori-mincho-400.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/shippori-mincho-500.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/shippori-mincho-600.woff2') format('woff2');}
+@font-face{font-family:'Shippori Mincho';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/shippori-mincho-800.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/zen-kaku-gothic-new-400.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/zen-kaku-gothic-new-500.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/zen-kaku-gothic-new-700.woff2') format('woff2');}
+@font-face{font-family:'Zen Kaku Gothic New';font-style:normal;font-weight:900;font-display:swap;src:url('/fonts/zen-kaku-gothic-new-900.woff2') format('woff2');}

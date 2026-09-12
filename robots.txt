@@ -1,0 +1,30 @@
+User-agent: *
+Disallow: /admin/
+
+# AI-training-only crawlers (block; they don't drive search/answer-engine traffic)
+User-agent: CCBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+# AI search / answer-engine crawlers (allow; these can drive referral traffic)
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+Sitemap: https://suzujapaneseschool.pages.dev/sitemap.xml

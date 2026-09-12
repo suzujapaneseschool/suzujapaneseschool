@@ -1,0 +1,26 @@
+# Suzu Sensei
+
+> Online Japanese language school run by Suzu, a certified native Japanese teacher. One-on-one lessons over Zoom for adult learners worldwide, from complete beginners to advanced JLPT candidates.
+
+Suzu Sensei offers private, one-on-one online Japanese lessons for foreigners of any level, taught live over Zoom by a certified native teacher with 8+ years of experience and 600+ students. Every new student starts with a free trial lesson (no card required).
+
+## Services
+- Conversation lessons for everyday fluency
+- JLPT exam preparation (N5 through N1)
+- Beginner course for complete beginners (no prior Japanese knowledge needed)
+- Japan trip preparation (travel-focused Japanese)
+- Group classes
+
+## Plans
+- Ebi Plan — ¥29,000/month, 1 lesson/week (50 min)
+- Kani Plan — ¥58,000/month, 2 lessons/week (50 min each)
+- Uni Plan — ¥85,000/month, 3 lessons/week (50 min each)
+
+All plans include homework, access to study materials, and a 25-minute counseling session. Payment is handled securely via Stripe.
+
+## Audience
+Lessons are held online worldwide across all time zones, with particular focus on learners in the Gulf/Arabian Peninsula (Saudi Arabia, UAE, Kuwait, Qatar, Bahrain, Oman) as well as North America, Europe, and elsewhere.
+
+## Links
+- Website: https://suzujapaneseschool.pages.dev/
+- Instagram: https://instagram.com/suzu.sensei
